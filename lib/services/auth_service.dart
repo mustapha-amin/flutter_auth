@@ -25,7 +25,7 @@ class AuthService {
             "role": "user",
             "password": password,
           },
-          cancelToken: CancelToken());
+        );
       AuthResponse authResponse = AuthResponse.fromJson(res.data);
       return right(authResponse);
     } on DioException catch (e) {
