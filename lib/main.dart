@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/controllers/auth_controllers.dart';
+import 'package:flutter_auth/screens/auth_wrapper.dart';
 import 'package:flutter_auth/screens/home.dart';
-import 'package:flutter_auth/screens/loading_screen.dart';
-import 'package:flutter_auth/screens/login.dart';
 import 'package:flutter_auth/services/locator.dart';
+import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer';
 
 void main() {
   setUpServices();
@@ -21,16 +22,35 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     UserStatus userStatus = ref.watch(authNotifierProvider);
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: switch (userStatus) {
-        UserStatus.loading || UserStatus.initial => const LoadingScreen(),
-        UserStatus.loggedIn => HomePage(),
-        _ => const LoginScreen(),
-      }
+      home: Stack(
+        alignment: Alignment.center,
+        children: [
+          switch (userStatus) {
+            UserStatus.loggedIn => HomePage(),
+            _ => const AuthWrapper(),
+          },
+          if (userStatus == UserStatus.loading)
+            GestureDetector(
+              onTap: () => log(ref.watch(authNotifierProvider).name),
+              child: SizedBox(
+                width: context.width * .2,
+                height: context.width * .2,
+                child: Material(
+                  color: Colors.black.withOpacity(0.8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const CircularProgressIndicator().centralize(),
+                ),
+              ),
+            )
+        ],
+      ),
     );
   }
 }

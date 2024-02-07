@@ -1,11 +1,22 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/screens/home.dart';
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:flutter_auth/services/locator.dart';
 import 'package:flutter_auth/services/tokens_storage.dart';
+import 'package:flutter_auth/utils/dialog.dart';
 import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+
+final currentScreenProvider = StateProvider((ref) {
+  return true;
+});
+
+void toggleCurrentScreen(WidgetRef ref) {
+  final isLogin = ref.watch(currentScreenProvider);
+  ref.read(currentScreenProvider.notifier).state = !isLogin;
+}
 
 enum UserStatus {
   loggedIn,
@@ -25,8 +36,10 @@ final authNotifierProvider =
 class AuthNotifier extends StateNotifier<UserStatus> {
   final AuthService authService;
   final TokensSecureStorage tokensSecureStorage;
-  AuthNotifier({required this.authService, required this.tokensSecureStorage})
-      : super(UserStatus.initial) {
+  AuthNotifier({
+    required this.authService,
+    required this.tokensSecureStorage,
+  }) : super(UserStatus.initial) {
     tokenIsValid();
   }
 
@@ -41,8 +54,8 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     final res = await authService.signIn(username, password);
     res.fold(
       (l) => {
-        Fluttertoast.showToast(msg: l),
         state = UserStatus.initial,
+        showErrorDialog(context: context, message: l),
       },
       (r) => {
         tokensSecureStorage.saveToken(TokenType.access, r.data!.accessToken!),
@@ -57,17 +70,15 @@ class AuthNotifier extends StateNotifier<UserStatus> {
       String? password) async {
     final res = await authService.signUp(email, username, password);
     res.fold(
-      (l) => Fluttertoast.showToast(msg: l),
-      (r) => {
-        logIn(context, username, password),
-      },
+      (l) => showErrorDialog(context: context, message: l),
+      (r) => logIn(context, username, password),
     );
   }
 
   void logOut(BuildContext? context) async {
     final res = await authService.logOut();
     res.fold(
-      (l) => Fluttertoast.showToast(msg: l),
+      (l) => showErrorDialog(context: context, message: l),
       (r) => {
         tokensSecureStorage.clearStoredTokens(),
         state = UserStatus.loggedOut,

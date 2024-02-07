@@ -1,19 +1,5 @@
 import 'dart:developer';
-
 import 'package:dio/dio.dart';
-
-class DioService {
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: "https://api.freeapi.app/users",
-      connectTimeout: const Duration(seconds: 10),
-    ),
-  );
-
-  DioService() {
-    dio.interceptors.add(DioInterceptor());
-  }
-}
 
 class DioInterceptor implements InterceptorsWrapper {
   @override

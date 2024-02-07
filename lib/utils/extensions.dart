@@ -23,10 +23,14 @@ extension WidgetExtensions on Widget {
 
 extension BuildContextExt on BuildContext {
   void replace(Widget? screen) {
-    Navigator.pushReplacement(this, MaterialPageRoute(builder: (context) => screen!));
+    Navigator.pushReplacement(
+        this, MaterialPageRoute(builder: (context) => screen!));
   }
 
   void pop(Widget? screen) {
     Navigator.pop(this);
   }
+
+  double get height => MediaQuery.of(this).size.height;
+  double get width => MediaQuery.of(this).size.width;
 }

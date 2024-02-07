@@ -25,7 +25,7 @@ class TokensSecureStorage {
 
   Future<String?> fetchToken(TokenType tokenType) async {
     String? token = await secureStorage.read(
-            key: tokenType == TokenType.access ? accessToken : refreshToken) ??
+            key: tokenType == TokenType.access ? accessToken : refreshToken,) ??
         '';
     return token;
   }
