@@ -9,8 +9,8 @@ const defaultException = "Oops! Something went wrong. Please try again later.";
 String handleDioException(DioException dioException) {
   if (dioException.response != null && dioException.response!.data != null) {
     final responseData = dioException.response!.data;
-    String? errorMessage = responseData['message'];
-    return errorMessage ?? '';
+    String errorMessage = responseData['message'];
+    return errorMessage;
   } else {
     switch (dioException.type) {
       case DioExceptionType.connectionTimeout:
