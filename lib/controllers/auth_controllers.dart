@@ -8,6 +8,7 @@ import 'package:flutter_auth/services/tokens_storage.dart';
 import 'package:flutter_auth/utils/dialog.dart';
 import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 final currentScreenProvider = StateProvider((ref) {
   return true;
@@ -45,8 +46,13 @@ class AuthNotifier extends StateNotifier<UserStatus> {
 
   void tokenIsValid() async {
     String? token = await tokensSecureStorage.fetchToken(TokenType.access);
-    bool valid = authService.tokenIsValid(token!);
-    state = valid ? UserStatus.loggedIn : UserStatus.loggedOut;
+    if (token!.isNotEmpty) {
+      state = JwtDecoder.isExpired(token)
+          ? UserStatus.loggedOut
+          : UserStatus.loggedIn;
+    } else {
+      state = UserStatus.loggedOut;
+    }
   }
 
   void logIn(BuildContext? context, String? username, String? password) async {
@@ -58,9 +64,9 @@ class AuthNotifier extends StateNotifier<UserStatus> {
         showErrorDialog(context: context, message: l),
       },
       (r) => {
+        state = UserStatus.loggedIn,
         tokensSecureStorage.saveToken(TokenType.access, r.data!.accessToken!),
         tokensSecureStorage.saveToken(TokenType.refresh, r.data!.refreshToken!),
-        state = UserStatus.loggedIn,
         context!.replace(HomePage()),
       },
     );
@@ -68,10 +74,17 @@ class AuthNotifier extends StateNotifier<UserStatus> {
 
   void signUp(BuildContext? context, String? email, String? username,
       String? password) async {
+    state = UserStatus.loading;
     final res = await authService.signUp(email, username, password);
     res.fold(
-      (l) => showErrorDialog(context: context, message: l),
-      (r) => logIn(context, username, password),
+      (l) => {
+        state = UserStatus.initial,
+        showErrorDialog(context: context, message: l),
+      },
+      (r) => {
+        state = UserStatus.loggedIn,
+        logIn(context, username, password),
+      },
     );
   }
 

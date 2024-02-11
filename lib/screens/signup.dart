@@ -1,9 +1,13 @@
+import 'dart:developer';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/controllers/auth_controllers.dart';
 import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/endpoints.dart';
 import '../utils/spacing.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -26,61 +30,65 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       appBar: AppBar(
         title: const Text("Sign Up"),
       ),
-      body: Form(
-        key: _formKey,
-        autovalidateMode: _autovalidateMode,
-        child: Column(
-          children: [
-            TextFormField(
-              controller: emailController,
-              validator: (value) =>
-                  value!.isNotEmpty ? null : "Enter your email",
-            ),
-            TextFormField(
-              controller: usernameController,
-              validator: (value) =>
-                  value!.isNotEmpty ? null : "Enter your username",
-            ),
-            TextFormField(
-              controller: passwordController,
-              validator: (value) =>
-                  value!.isNotEmpty ? null : "Enter your password",
-            ),
-            sbH(50),
-            SizedBox(
-              width: context.width,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ref.read(authNotifierProvider.notifier).signUp(
-                          context,
-                          emailController.text.trim(),
-                          usernameController.text.trim(),
-                          passwordController.text.trim(),
-                        );
-                  } else {
-                    setState(() {
-                      _autovalidateMode = AutovalidateMode.always;
-                    });
-                  }
-                },
-                child: const Text("Sign Up"),
+      body: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          autovalidateMode: _autovalidateMode,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: emailController,
+                validator: (value) =>
+                    value!.isNotEmpty ? null : "Enter your email",
+                decoration: InputDecoration(hintText: "email"),
               ),
-            ),
-            Text.rich(
-              TextSpan(text: "Already have an account? ", children: [
-                TextSpan(
-                  text: "Log In",
-                  style: const TextStyle(color: Colors.blue),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () => toggleCurrentScreen(ref),
-                )
-              ]),
-            )
-          ],
-        ).padAll(20),
+              TextFormField(
+                controller: usernameController,
+                validator: (value) =>
+                    value!.isNotEmpty ? null : "Enter your username",
+                decoration: InputDecoration(hintText: "username"),
+              ),
+              TextFormField(
+                controller: passwordController,
+                validator: (value) =>
+                    value!.isNotEmpty ? null : "Enter your password",
+                decoration: InputDecoration(hintText: "password"),
+              ),
+              sbH(50),
+              SizedBox(
+                width: context.width,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      ref.read(authNotifierProvider.notifier).signUp(
+                            context,
+                            emailController.text.trim(),
+                            usernameController.text.trim(),
+                            passwordController.text.trim(),
+                          );
+                    } else {
+                      setState(() {
+                        _autovalidateMode = AutovalidateMode.always;
+                      });
+                    }
+                  },
+                  child: const Text("Sign Up"),
+                ),
+              ),
+              Text.rich(
+                TextSpan(text: "Already have an account? ", children: [
+                  TextSpan(
+                    text: "Log In",
+                    style: const TextStyle(color: Colors.blue),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => toggleCurrentScreen(ref),
+                  )
+                ]),
+              )
+            ],
+          ).padAll(20),
+        ),
       ),
     );
   }
 }
-

@@ -18,14 +18,16 @@ class AuthService {
     String? password,
   ) async {
     try {
-      final res = await dio.post(ApiEndpoints.register,
-          data: {
-            "email": email,
-            "username": username,
-            "role": "user",
-            "password": password,
-          },
-        );
+      final res = await dio.post(
+        ApiEndpoints.register,
+        data: {
+          "email": email,
+          "username": username,
+          "role": "ADMIN",
+          "password": password,
+        },
+      );
+      log(res.statusMessage!);
       AuthResponse authResponse = AuthResponse.fromJson(res.data);
       return right(authResponse);
     } on DioException catch (e) {
@@ -43,11 +45,16 @@ class AuthService {
           "password": password,
         },
       );
-      AuthResponse authResponse = AuthResponse.fromJson(res.data);
+      Map<String, dynamic> data = res.data;
+      AuthResponse authResponse = AuthResponse.fromJson(data);
       return right(authResponse);
     } on DioException catch (e) {
       final message = handleDioException(e);
       return left(message);
+    } catch (e, stck) {
+      log(stck.toString(), level: 900);
+      log(e.toString(), level: 900);
+      return left(e.toString() + stck.toString());
     }
   }
 
@@ -58,21 +65,25 @@ class AuthService {
     } on DioException catch (e) {
       final message = handleDioException(e);
       return left(message);
+    } catch (e) {
+      return left(e.toString());
     }
   }
 
   bool tokenIsValid(String token) {
-    return token.isEmpty ? false : JwtDecoder.isExpired(token);
+    return JwtDecoder.isExpired(token);
   }
 
   FutureEither<String> getNewRefreshToken() async {
     try {
       final res = await dio.post(ApiEndpoints.refreshToken);
       log(res.data);
-      return right("r");
+      return right("success");
     } on DioException catch (e) {
       final message = handleDioException(e);
       return left(message);
+    } catch (e) {
+      return left(e.toString());
     }
   }
 }

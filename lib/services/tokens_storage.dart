@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 enum TokenType {
@@ -16,6 +18,7 @@ class TokensSecureStorage {
       key: tokenType == TokenType.access ? accessToken : refreshToken,
       value: token,
     );
+    log((await fetchToken(TokenType.access))!);
   }
 
   Future<bool?> tokenExist(TokenType tokenType) async {
@@ -25,7 +28,8 @@ class TokensSecureStorage {
 
   Future<String?> fetchToken(TokenType tokenType) async {
     String? token = await secureStorage.read(
-            key: tokenType == TokenType.access ? accessToken : refreshToken,) ??
+          key: tokenType == TokenType.access ? accessToken : refreshToken,
+        ) ??
         '';
     return token;
   }

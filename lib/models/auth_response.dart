@@ -48,8 +48,8 @@ class Data {
     String toRawJson() => json.encode(toJson());
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
-        accessToken: json["accessToken"],
-        refreshToken: json["refreshToken"],
+        accessToken: json["accessToken"] ?? "",
+        refreshToken: json["refreshToken"] ?? "",
         user: json["user"] == null ? null : User.fromJson(json["user"]),
     );
 

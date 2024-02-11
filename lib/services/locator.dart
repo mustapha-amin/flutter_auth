@@ -10,7 +10,7 @@ void setUpServices() {
     ..registerLazySingleton(
       () => Dio(
         BaseOptions(
-          baseUrl: "https://api.freeapi.app",
+          baseUrl: "https://api.freeapi.app/api/v1",
           connectTimeout: const Duration(seconds: 15),
         ),
       )..interceptors.add(DioInterceptor()),
