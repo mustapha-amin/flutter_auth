@@ -1,12 +1,24 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:flutter_auth/services/auth_service.dart';
 import 'package:flutter_auth/services/locator.dart';
 import 'package:flutter_auth/services/tokens_storage.dart';
 
 class DioInterceptor implements InterceptorsWrapper {
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    log("<-- Error: ${err.type}");
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    log("<-- Error: ${err.response!.statusCode}}");
+    final options = err.response!.requestOptions;
+    final authService = locator.get<AuthService>();
+    String? newToken;
+    if (err.response!.statusCode == 401) {
+      log("expired or invalid access token");
+      await authService.refreshToken();
+      newToken =
+          await locator.get<TokensSecureStorage>().fetchToken(TokenType.access);
+      options.headers['Authorization'] = 'Bearer $newToken';
+      return handler.resolve(await locator.get<Dio>().fetch(options));
+    }
     return handler.next(err);
   }
 
@@ -15,10 +27,11 @@ class DioInterceptor implements InterceptorsWrapper {
       RequestOptions options, RequestInterceptorHandler handler) async {
     String? token =
         await locator.get<TokensSecureStorage>().fetchToken(TokenType.access);
-    if(token!.isNotEmpty) {
-      options.headers["Authorization"] = "Bearer: $token";
+    if (token!.isNotEmpty) {
+      options.headers["Authorization"] = "Bearer $token";
+      log(options.headers.values.toString());
+      log("--> ${options.method} ${options.path} $token");
     }
-    log("--> ${options.method} ${options.path}");
     return handler.next(options);
   }
 

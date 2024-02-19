@@ -7,6 +7,7 @@ import 'package:flutter_auth/controllers/auth_controllers.dart';
 import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../controllers/auth_screen_controller.dart';
 import '../core/endpoints.dart';
 import '../utils/spacing.dart';
 

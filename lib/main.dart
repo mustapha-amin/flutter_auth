@@ -3,9 +3,8 @@ import 'package:flutter_auth/controllers/auth_controllers.dart';
 import 'package:flutter_auth/screens/auth_wrapper.dart';
 import 'package:flutter_auth/screens/home.dart';
 import 'package:flutter_auth/services/locator.dart';
-import 'package:flutter_auth/utils/extensions.dart';
+import 'package:flutter_auth/widgets/loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:developer';
 
 void main() {
   setUpServices();
@@ -34,21 +33,7 @@ class MyApp extends ConsumerWidget {
             UserStatus.loggedIn => HomePage(),
             _ => const AuthWrapper(),
           },
-          if (userStatus == UserStatus.loading)
-            GestureDetector(
-              onTap: () => log(ref.watch(authNotifierProvider).name),
-              child: SizedBox(
-                width: context.width * .2,
-                height: context.width * .2,
-                child: Material(
-                  color: Colors.black.withOpacity(0.8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const CircularProgressIndicator().centralize(),
-                ),
-              ),
-            )
+          if (userStatus == UserStatus.loading) const Loader()
         ],
       ),
     );

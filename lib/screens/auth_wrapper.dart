@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_auth/screens/login.dart';
 import 'package:flutter_auth/screens/signup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../controllers/auth_controllers.dart';
+import '../controllers/auth_screen_controller.dart';
 
 
 

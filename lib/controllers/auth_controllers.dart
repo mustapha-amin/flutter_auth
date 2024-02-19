@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_auth/screens/auth_wrapper.dart';
 import 'package:flutter_auth/screens/home.dart';
 import 'package:flutter_auth/services/auth_service.dart';
 import 'package:flutter_auth/services/locator.dart';
@@ -10,20 +9,11 @@ import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-final currentScreenProvider = StateProvider((ref) {
-  return true;
-});
-
-void toggleCurrentScreen(WidgetRef ref) {
-  final isLogin = ref.watch(currentScreenProvider);
-  ref.read(currentScreenProvider.notifier).state = !isLogin;
-}
-
 enum UserStatus {
   loggedIn,
   loggedOut,
   loading,
-  initial,
+  initial;
 }
 
 final authNotifierProvider =
@@ -45,11 +35,16 @@ class AuthNotifier extends StateNotifier<UserStatus> {
   }
 
   void tokenIsValid() async {
+    state = UserStatus.loading;
     String? token = await tokensSecureStorage.fetchToken(TokenType.access);
-    if (token!.isNotEmpty) {
-      state = JwtDecoder.isExpired(token)
-          ? UserStatus.loggedOut
-          : UserStatus.loggedIn;
+    if (token!.isNotEmpty && !JwtDecoder.isExpired(token)) {
+      try {
+        await locator.get<AuthService>().getCurrentUser();
+        state = UserStatus.loggedIn;
+      } catch (e) {
+        debugPrint(e.toString());
+        state = UserStatus.loggedOut;
+      }
     } else {
       state = UserStatus.loggedOut;
     }
@@ -60,13 +55,17 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     final res = await authService.signIn(username, password);
     res.fold(
       (l) => {
-        state = UserStatus.initial,
+        state = UserStatus.loggedOut,
         showErrorDialog(context: context, message: l),
       },
       (r) => {
         state = UserStatus.loggedIn,
-        tokensSecureStorage.saveToken(TokenType.access, r.data!.accessToken!),
-        tokensSecureStorage.saveToken(TokenType.refresh, r.data!.refreshToken!),
+        locator
+            .get<TokensSecureStorage>()
+            .saveToken(TokenType.access, r.data!.accessToken!),
+        locator
+            .get<TokensSecureStorage>()
+            .saveToken(TokenType.refresh, r.data!.refreshToken!),
         context!.replace(HomePage()),
       },
     );
@@ -78,12 +77,16 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     final res = await authService.signUp(email, username, password);
     res.fold(
       (l) => {
-        state = UserStatus.initial,
+        state = UserStatus.loggedOut,
         showErrorDialog(context: context, message: l),
       },
-      (r) => {
-        state = UserStatus.loggedIn,
+      (r) async => {
+        await tokensSecureStorage.saveToken(
+            TokenType.access, r.data!.accessToken!),
+        await tokensSecureStorage.saveToken(
+            TokenType.refresh, r.data!.refreshToken!),
         logIn(context, username, password),
+        state = UserStatus.loggedIn,
       },
     );
   }
@@ -93,9 +96,8 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     res.fold(
       (l) => showErrorDialog(context: context, message: l),
       (r) => {
-        tokensSecureStorage.clearStoredTokens(),
         state = UserStatus.loggedOut,
-        context!.replace(HomePage()),
+        context!.replace(const AuthWrapper()),
       },
     );
   }

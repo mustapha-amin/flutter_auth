@@ -3,10 +3,13 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_auth/core/endpoints.dart';
 import 'package:flutter_auth/models/auth_response.dart';
+import 'package:flutter_auth/services/locator.dart';
+import 'package:flutter_auth/services/tokens_storage.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import '../core/exceptions.dart';
 import '/core/typedefs.dart';
+
+final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
 class AuthService {
   final Dio dio;
@@ -27,21 +30,25 @@ class AuthService {
           "password": password,
         },
       );
-      log(res.statusMessage!);
-      AuthResponse authResponse = AuthResponse.fromJson(res.data);
+      Map<String, dynamic> data = res.data;
+      AuthResponse authResponse = AuthResponse.fromJson(data);
       return right(authResponse);
     } on DioException catch (e) {
       final message = handleDioException(e);
       return left(message);
+    } catch (e, stck) {
+      log(stck.toString(), level: 900);
+      return left(e.toString());
     }
   }
 
-  FutureEither<AuthResponse> signIn(String? username, String? password) async {
+  FutureEither<AuthResponse> signIn(
+      String? usernameOrEmail, String? password) async {
     try {
       final res = await dio.post(
         ApiEndpoints.login,
         data: {
-          "username": username,
+         emailRegex.hasMatch(usernameOrEmail!) ? "email" : "username": usernameOrEmail,
           "password": password,
         },
       );
@@ -53,8 +60,7 @@ class AuthService {
       return left(message);
     } catch (e, stck) {
       log(stck.toString(), level: 900);
-      log(e.toString(), level: 900);
-      return left(e.toString() + stck.toString());
+      return left(e.toString());
     }
   }
 
@@ -65,25 +71,43 @@ class AuthService {
     } on DioException catch (e) {
       final message = handleDioException(e);
       return left(message);
-    } catch (e) {
+    } catch (e, stkT) {
+      log(stkT.toString());
       return left(e.toString());
     }
   }
 
-  bool tokenIsValid(String token) {
-    return JwtDecoder.isExpired(token);
-  }
-
-  FutureEither<String> getNewRefreshToken() async {
+  Future<User?> getCurrentUser() async {
     try {
-      final res = await dio.post(ApiEndpoints.refreshToken);
-      log(res.data);
-      return right("success");
+      final res = await dio.get(ApiEndpoints.currentUser);
+      Map<String, dynamic> data = res.data;
+      return User.fromJson(data["data"]);
     } on DioException catch (e) {
       final message = handleDioException(e);
-      return left(message);
-    } catch (e) {
-      return left(e.toString());
+      throw Exception(message);
+    } catch (e, stkT) {
+      log(stkT.toString());
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<String?> refreshToken() async {
+    try {
+      final res = await dio.post(ApiEndpoints.refreshToken);
+      Map<String, dynamic> data = res.data;
+      AuthResponse authResponse = AuthResponse.fromJson(data);
+      await locator
+          .get<TokensSecureStorage>()
+          .saveToken(TokenType.access, authResponse.data!.accessToken!);
+      await locator
+          .get<TokensSecureStorage>()
+          .saveToken(TokenType.refresh, authResponse.data!.refreshToken!);
+      return authResponse.data!.accessToken;
+    } on DioException catch (e) {
+      throw Exception(handleDioException(e));
+    } catch (e, stkT) {
+      log(stkT.toString());
+      throw Exception(e.toString());
     }
   }
 }

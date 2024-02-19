@@ -13,7 +13,7 @@ class TokensSecureStorage {
   static const accessToken = "accessToken";
   static const refreshToken = "refreshToken";
 
-  void saveToken(TokenType tokenType, String token) async {
+  Future<void> saveToken(TokenType tokenType, String token) async {
     await secureStorage.write(
       key: tokenType == TokenType.access ? accessToken : refreshToken,
       value: token,

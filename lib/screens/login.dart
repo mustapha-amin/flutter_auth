@@ -9,6 +9,7 @@ import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
+import '../controllers/auth_screen_controller.dart';
 import '../utils/spacing.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -49,9 +50,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             children: [
               TextFormField(
+                decoration: const InputDecoration(
+                  hintText: "username / email",
+                ),
                 controller: usernameController,
                 validator: (value) =>
-                    value!.isNotEmpty ? null : "Enter your username",
+                    value!.isNotEmpty ? null : "Enter your username / email",
               ),
               TextFormField(
                 controller: passwordController,
@@ -59,6 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     value!.isNotEmpty ? null : "Enter your password",
                 obscureText: isObscure,
                 decoration: InputDecoration(
+                  hintText: "password",
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
