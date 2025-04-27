@@ -3,6 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/controllers/auth_controllers.dart';
 import 'package:flutter_auth/controllers/current_user_controller.dart';
+import 'package:flutter_auth/controllers/todo_controller.dart';
+import 'package:flutter_auth/screens/add_todo.dart';
+import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_auth/utils/spacing.dart';
 import 'package:flutter_auth/widgets/loader.dart';
 import 'package:flutter_auth/widgets/user_info.dart';
@@ -16,6 +19,16 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  TextEditingController titleController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    descriptionController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,57 +43,45 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-      body: ref.watch(currentUserProvider).when(
-            data: (user) {
-              return Column(
-                children: [
-                  InkWell(
-                    onTap: () => log(user.toString()),
-                    child: CircleAvatar(
-                      backgroundImage:
-                          NetworkImage('https://placehold.co/600x400'),
-                      radius: 30,
-                    ),
-                  ),
-                  sbH(30),
-                  UserInfo(title: "Username", value: user!.username!),
-                  UserInfo(title: "Email", value: user.email!),
-                  UserInfo(
-                    title: "Created at",
-                    value: user.createdAt!.toString(),
-                  ),
-                  UserInfo(title: "Role", value: user.role!),
-                  UserInfo(
-                    title: "Email is verified",
-                    value: user.isEmailVerified.toString(),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      ref.invalidate(currentUserProvider);
+      body: ref.watch(todosAsyncProvider).when(
+        data: (data) {
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                ...data.map((todo) {
+                  return CheckboxListTile(
+                    title: Text(todo.title),
+                    value: todo.isComplete,
+                    onChanged: (_) {
+                      ref.read(todosAsyncProvider.notifier).updateTodo(
+                            context,
+                            todo.copyWith(isComplete: !todo.isComplete),
+                          );
                     },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Refresh"),
-                  )
-                ],
-              );
-            },
-            error: (err, stk) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(err.toString()),
-                  TextButton.icon(
-                    onPressed: () async {
-                      ref.invalidate(currentUserProvider);
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Retry"),
-                  )
-                ],
-              ),
+                  );
+                })
+              ],
             ),
-            loading: () => const Center(child: Loader()),
-          ),
+          );
+        },
+        error: (error, stk) {
+          return Center(
+            child: Text(
+              error.toString(),
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        },
+        loading: () {
+          return Loader();
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.push(AddTodo());
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

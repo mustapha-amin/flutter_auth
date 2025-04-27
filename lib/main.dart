@@ -5,6 +5,7 @@ import 'package:flutter_auth/screens/home.dart';
 import 'package:flutter_auth/services/locator.dart';
 import 'package:flutter_auth/widgets/loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 void main() {
   setUpServices();
@@ -26,11 +27,20 @@ class MyApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: switch (userStatus) {
-        UserStatus.loggedIn => HomePage(),
-       
-        _ => const AuthWrapper(),
-      },
+      home: FutureBuilder(
+        future: ref.read(authNotifierProvider.notifier).tokenIsValid(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Loader();
+          } else if (snapshot.hasError) {
+            return const AuthWrapper();
+          } else if (snapshot.data == true) {
+            return HomePage();
+          } else {
+            return const AuthWrapper();
+          }
+        },
+      ),
     );
   }
 }

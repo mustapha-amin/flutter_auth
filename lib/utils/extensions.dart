@@ -30,6 +30,10 @@ extension BuildContextExt on BuildContext {
   void pop(Widget? screen) {
     Navigator.pop(this);
   }
+  
+  void push(Widget? screen) {
+    Navigator.push(this, MaterialPageRoute(builder: (context) => screen!));
+  }
 
   double get height => MediaQuery.of(this).size.height;
   double get width => MediaQuery.of(this).size.width;

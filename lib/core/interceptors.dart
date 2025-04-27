@@ -7,7 +7,7 @@ import 'package:flutter_auth/services/tokens_storage.dart';
 class DioInterceptor implements InterceptorsWrapper {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    log("<-- Error: ${err.response?.statusCode}");
+    log("<-- Error: ${err.response?.statusCode} ${err.response?.data}");
 
     final originalRequest = err.requestOptions;
 
@@ -38,7 +38,7 @@ class DioInterceptor implements InterceptorsWrapper {
     if (token!.isNotEmpty) {
       options.headers["Authorization"] = "Bearer $token";
       log(options.headers.values.toString());
-      log("--> ${options.method} ${options.path} $token");
+      log("--> ${options.method} ${options.uri} $token");
     }
     return handler.next(options);
   }

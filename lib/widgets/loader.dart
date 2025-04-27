@@ -8,9 +8,9 @@ class Loader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: FractionallySizedBox(
-          widthFactor: 0.2,
-          heightFactor: 0.08,
+        child: SizedBox(
+          width: context.width * 0.2,
+          height: context.width * 0.2,
           child: Material(
             color: Colors.black.withOpacity(0.8),
             shape: RoundedRectangleBorder(
