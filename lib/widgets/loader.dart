@@ -6,15 +6,19 @@ class Loader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: context.width * .2,
-      height: context.width * .2,
-      child: Material(
-        color: Colors.black.withOpacity(0.8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+    return Scaffold(
+      body: Center(
+        child: FractionallySizedBox(
+          widthFactor: 0.2,
+          heightFactor: 0.08,
+          child: Material(
+            color: Colors.black.withOpacity(0.8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const CircularProgressIndicator().centralize(),
+          ),
         ),
-        child: const CircularProgressIndicator().centralize(),
       ),
     );
   }

@@ -26,7 +26,7 @@ class AuthService {
         data: {
           "email": email,
           "username": username,
-          "role": "ADMIN",
+          "role": "USER",
           "password": password,
         },
       );
@@ -34,6 +34,13 @@ class AuthService {
       AuthResponse authResponse = AuthResponse.fromJson(data);
       return right(authResponse);
     } on DioException catch (e) {
+      if (e.response!.statusCode == 401) {
+      final response = await dio.post(ApiEndpoints.refreshToken, data: {
+          "refreshToken": locator
+              .get<TokensSecureStorage>()
+              .fetchToken(TokenType.refresh),
+        });
+      }
       final message = handleDioException(e);
       return left(message);
     } catch (e, stck) {
@@ -48,7 +55,8 @@ class AuthService {
       final res = await dio.post(
         ApiEndpoints.login,
         data: {
-         emailRegex.hasMatch(usernameOrEmail!) ? "email" : "username": usernameOrEmail,
+          emailRegex.hasMatch(usernameOrEmail!) ? "email" : "username":
+              usernameOrEmail,
           "password": password,
         },
       );

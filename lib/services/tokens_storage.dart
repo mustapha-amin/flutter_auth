@@ -35,6 +35,7 @@ class TokensSecureStorage {
   }
 
   Future<void> clearStoredTokens() async {
+    log("tokens cleared", level: 900);
     await secureStorage.deleteAll();
   }
 }

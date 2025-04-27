@@ -4,8 +4,6 @@ import 'package:flutter_auth/screens/signup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_screen_controller.dart';
 
-
-
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
 

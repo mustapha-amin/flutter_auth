@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/screens/auth_wrapper.dart';
 import 'package:flutter_auth/screens/home.dart';
@@ -9,12 +11,7 @@ import 'package:flutter_auth/utils/extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-enum UserStatus {
-  loggedIn,
-  loggedOut,
-  loading,
-  initial;
-}
+enum UserStatus { loggedIn, loading, loggedOut, error, initial }
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, UserStatus>((ref) {
@@ -30,24 +27,11 @@ class AuthNotifier extends StateNotifier<UserStatus> {
   AuthNotifier({
     required this.authService,
     required this.tokensSecureStorage,
-  }) : super(UserStatus.initial) {
-    tokenIsValid();
-  }
+  }) : super(UserStatus.initial);
 
-  void tokenIsValid() async {
-    state = UserStatus.loading;
+  Future<bool> tokenIsValid() async {
     String? token = await tokensSecureStorage.fetchToken(TokenType.access);
-    if (token!.isNotEmpty && !JwtDecoder.isExpired(token)) {
-      try {
-        await locator.get<AuthService>().getCurrentUser();
-        state = UserStatus.loggedIn;
-      } catch (e) {
-        debugPrint(e.toString());
-        state = UserStatus.loggedOut;
-      }
-    } else {
-      state = UserStatus.loggedOut;
-    }
+    return token!.isNotEmpty ? !JwtDecoder.isExpired(token) : false;
   }
 
   void logIn(BuildContext? context, String? username, String? password) async {
@@ -55,8 +39,9 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     final res = await authService.signIn(username, password);
     res.fold(
       (l) => {
-        state = UserStatus.loggedOut,
-        showErrorDialog(context: context, message: l),
+        state = UserStatus.error,
+        log(l),
+        if (context!.mounted) showErrorDialog(context: context, message: l),
       },
       (r) => {
         state = UserStatus.loggedIn,
@@ -66,7 +51,8 @@ class AuthNotifier extends StateNotifier<UserStatus> {
         locator
             .get<TokensSecureStorage>()
             .saveToken(TokenType.refresh, r.data!.refreshToken!),
-        context!.replace(HomePage()),
+        if (context!.mounted) context.replace(HomePage()),
+        log(JwtDecoder.getRemainingTime(r.data!.accessToken!).toString()),
       },
     );
   }
@@ -77,7 +63,7 @@ class AuthNotifier extends StateNotifier<UserStatus> {
     final res = await authService.signUp(email, username, password);
     res.fold(
       (l) => {
-        state = UserStatus.loggedOut,
+        state = UserStatus.initial,
         showErrorDialog(context: context, message: l),
       },
       (r) async => {
@@ -85,19 +71,23 @@ class AuthNotifier extends StateNotifier<UserStatus> {
             TokenType.access, r.data!.accessToken!),
         await tokensSecureStorage.saveToken(
             TokenType.refresh, r.data!.refreshToken!),
-        logIn(context, username, password),
-        state = UserStatus.loggedIn,
+        if (context!.mounted) context.replace(HomePage()),
       },
     );
   }
 
   void logOut(BuildContext? context) async {
+    state = UserStatus.loading;
     final res = await authService.logOut();
     res.fold(
-      (l) => showErrorDialog(context: context, message: l),
+      (l) => {
+        state = UserStatus.error,
+        showErrorDialog(context: context, message: l),
+      },
       (r) => {
-        state = UserStatus.loggedOut,
+        locator.get<TokensSecureStorage>().clearStoredTokens(),
         context!.replace(const AuthWrapper()),
+        state = UserStatus.loggedOut,
       },
     );
   }

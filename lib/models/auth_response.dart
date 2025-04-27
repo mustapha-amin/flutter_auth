@@ -119,6 +119,11 @@ class User {
         "updatedAt": updatedAt?.toIso8601String(),
         "username": username,
       };
+
+  @override
+  String toString() {
+    return 'User(v: $v, id: $id, avatar: $avatar, createdAt: $createdAt, email: $email, isEmailVerified: $isEmailVerified, loginType: $loginType, role: $role, updatedAt: $updatedAt, username: $username)';
+  }
 }
 
 class Avatar {
@@ -147,4 +152,9 @@ class Avatar {
         "localPath": localPath,
         "url": url,
       };
+
+  @override
+  String toString() {
+    return 'Avatar(id: $id, localPath: $localPath, url: $url)';
+  }
 }

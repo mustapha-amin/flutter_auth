@@ -26,16 +26,11 @@ class MyApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Stack(
-        alignment: Alignment.center,
-        children: [
-          switch (userStatus) {
-            UserStatus.loggedIn => HomePage(),
-            _ => const AuthWrapper(),
-          },
-          if (userStatus == UserStatus.loading) const Loader()
-        ],
-      ),
+      home: switch (userStatus) {
+        UserStatus.loggedIn => HomePage(),
+       
+        _ => const AuthWrapper(),
+      },
     );
   }
 }

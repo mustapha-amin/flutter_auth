@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_auth/controllers/auth_controllers.dart';
 import 'package:flutter_auth/controllers/current_user_controller.dart';
@@ -32,12 +34,16 @@ class _HomePageState extends ConsumerState<HomePage> {
             data: (user) {
               return Column(
                 children: [
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(user!.avatar!.url!),
-                    radius: 30,
+                  InkWell(
+                    onTap: () => log(user.toString()),
+                    child: CircleAvatar(
+                      backgroundImage:
+                          NetworkImage('https://placehold.co/600x400'),
+                      radius: 30,
+                    ),
                   ),
                   sbH(30),
-                  UserInfo(title: "Username", value: user.username!),
+                  UserInfo(title: "Username", value: user!.username!),
                   UserInfo(title: "Email", value: user.email!),
                   UserInfo(
                     title: "Created at",

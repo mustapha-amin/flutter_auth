@@ -7,21 +7,29 @@ import 'package:flutter_auth/services/tokens_storage.dart';
 class DioInterceptor implements InterceptorsWrapper {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    log("<-- Error: ${err.response!.statusCode}}");
-    final options = err.response!.requestOptions;
-    final authService = locator.get<AuthService>();
-    String? newToken;
-    if (err.response!.statusCode == 401) {
-      log("expired or invalid access token");
-      await authService.refreshToken();
-      newToken =
-          await locator.get<TokensSecureStorage>().fetchToken(TokenType.access);
-      options.headers['Authorization'] = 'Bearer $newToken';
-      return handler.resolve(await locator.get<Dio>().fetch(options));
+    log("<-- Error: ${err.response?.statusCode}");
+
+    final originalRequest = err.requestOptions;
+
+    if (err.response?.statusCode == 401) {
+      try {
+        log("Access token expired. Attempting to refresh...");
+        final newAccessToken = await locator.get<AuthService>().refreshToken();
+        if (newAccessToken == null) {
+          return handler.reject(err);
+        }
+
+        originalRequest.headers['Authorization'] = 'Bearer $newAccessToken';
+        final retryResponse = await locator.get<Dio>().fetch(originalRequest);
+        return handler.resolve(retryResponse);
+      } catch (e, stk) {
+        log("Token refresh failed: $e\n$stk");
+        return handler.reject(err);
+      }
     }
+
     return handler.next(err);
   }
-
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
